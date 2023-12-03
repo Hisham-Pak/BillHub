@@ -38,8 +38,12 @@ int main(void)
 #ifdef __APPLE__
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 #endif
-
-    win = glfwCreateWindow(win_width, win_height, "Demo", NULL, NULL);
+    /* Platform */
+    /* Get screen size */
+    const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
+    int win_width = mode->width;
+    int win_height = mode->height;
+    win = glfwCreateWindow(win_width, win_height, "BillHub", NULL, NULL);
     glfwMakeContextCurrent(win);
 
     /* Glew */
