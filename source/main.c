@@ -42,53 +42,97 @@ struct account {
 	float newbalance;
 	float payment;
 	struct date paymentdate;
-} customer;
+} create_customer, list_customer;
 
-static void customer_window(struct nk_context *ctx)
+static void create_customer_window(struct nk_context *ctx)
 {
 	if (nk_begin(ctx, "Create Customer", nk_rect(50, 50, 400, 400), NK_WINDOW_BORDER|NK_WINDOW_MOVABLE|NK_WINDOW_CLOSABLE)) {
 		nk_layout_row_dynamic(ctx, 30, 2);
 		
 		nk_label(ctx, "Account No:", NK_TEXT_LEFT);
-		nk_property_int(ctx, "#Account No:", INT_MIN, &customer.acct_no, INT_MAX, 1, 1);
+		nk_property_int(ctx, "#Account No:", INT_MIN, &create_customer.acct_no, INT_MAX, 1, 1);
 		
         nk_label(ctx, "Name:", NK_TEXT_LEFT);
-		nk_edit_string_zero_terminated(ctx, NK_EDIT_FIELD, customer.name, sizeof(customer.name), nk_filter_default);
+		nk_edit_string_zero_terminated(ctx, NK_EDIT_FIELD, create_customer.name, sizeof(create_customer.name), nk_filter_default);
 		
 		nk_label(ctx, "Mobile No:", NK_TEXT_LEFT);
-		nk_edit_string_zero_terminated(ctx, NK_EDIT_FIELD, customer.mobile_no, sizeof(customer.mobile_no), nk_filter_default);
+		nk_edit_string_zero_terminated(ctx, NK_EDIT_FIELD, create_customer.mobile_no, sizeof(create_customer.mobile_no), nk_filter_default);
 		
 		nk_label(ctx, "Street:", NK_TEXT_LEFT);
-		nk_edit_string_zero_terminated(ctx, NK_EDIT_FIELD, customer.street, sizeof(customer.street), nk_filter_default);
+		nk_edit_string_zero_terminated(ctx, NK_EDIT_FIELD, create_customer.street, sizeof(create_customer.street), nk_filter_default);
 		
 		nk_label(ctx, "City:", NK_TEXT_LEFT);
-		nk_edit_string_zero_terminated(ctx, NK_EDIT_FIELD, customer.city, sizeof(customer.city), nk_filter_default);
+		nk_edit_string_zero_terminated(ctx, NK_EDIT_FIELD, create_customer.city, sizeof(create_customer.city), nk_filter_default);
 
         nk_label(ctx, "Old Balance:", NK_TEXT_LEFT);
-        nk_property_float(ctx, "#Old Balance:", FLT_MIN, &customer.oldbalance, FLT_MAX, 1, 1);
+        nk_property_float(ctx, "#Old Balance:", FLT_MIN, &create_customer.oldbalance, FLT_MAX, 1, 1);
 
         nk_label(ctx, "New Balance:", NK_TEXT_LEFT);
-        nk_property_float(ctx, "#New Balance:", FLT_MIN, &customer.newbalance, FLT_MAX, 1, 1);
+        nk_property_float(ctx, "#New Balance:", FLT_MIN, &create_customer.newbalance, FLT_MAX, 1, 1);
 
         nk_label(ctx, "Payment:", NK_TEXT_LEFT);
-        nk_property_float(ctx, "#Payment:", FLT_MIN, &customer.payment, FLT_MAX, 1, 1);
+        nk_property_float(ctx, "#Payment:", FLT_MIN, &create_customer.payment, FLT_MAX, 1, 1);
 
 		// Add more fields as needed...
 		
 		if (nk_button_label(ctx, "Submit")) {
-			// Handle form submission...
-			printf("Account No: %d\n", customer.acct_no);
-			printf("Name: %s\n", customer.name);
-			printf("Mobile No: %s\n", customer.mobile_no);
-			printf("Street: %s\n", customer.street);
-			printf("City: %s\n", customer.city);
-            printf("Old Balance: %.2f\n", customer.oldbalance);
-            printf("New Balance: %.2f\n", customer.newbalance);
-            printf("Payment: %.2f\n", customer.payment);
-			// Print more fields as needed...
+            FILE *file = fopen("customers.bin", "ab");
+            if (file != NULL) {
+                fwrite(&create_customer, sizeof(create_customer), 1, file);
+                // Print more fields as needed...
+                fclose(file);
+            } else {
+                printf("Error opening file!\n");
+            }
 		}
 	}
 	nk_end(ctx);
+}
+
+static void list_customer_window(struct nk_context *ctx)
+{
+    if (nk_begin(ctx, "List Customers", nk_rect(500, 50, 400, 400), NK_WINDOW_BORDER|NK_WINDOW_MOVABLE|NK_WINDOW_CLOSABLE)) {
+        FILE *file = fopen("customers.bin", "rb");
+        if (file != NULL) {
+            char buffer[10000];
+            while (fread(&list_customer, sizeof(struct account), 1, file)) {
+                nk_layout_row_dynamic(ctx, 30, 2);
+                nk_label(ctx, "Account No:", NK_TEXT_LEFT);
+                sprintf(buffer, "%d", list_customer.acct_no);
+                nk_label(ctx, buffer, NK_TEXT_RIGHT);
+                
+                nk_label(ctx, "Name:", NK_TEXT_LEFT);
+                nk_label(ctx, list_customer.name, NK_TEXT_RIGHT);
+                
+                nk_label(ctx, "Mobile No:", NK_TEXT_LEFT);
+                nk_label(ctx, list_customer.mobile_no, NK_TEXT_RIGHT);
+                
+                nk_label(ctx, "Street:", NK_TEXT_LEFT);
+                nk_label(ctx, list_customer.street, NK_TEXT_RIGHT);
+                
+                nk_label(ctx, "City:", NK_TEXT_LEFT);
+                nk_label(ctx, list_customer.city, NK_TEXT_RIGHT);
+                
+                nk_label(ctx, "Old Balance:", NK_TEXT_LEFT);
+                sprintf(buffer, "%.2f", list_customer.oldbalance);
+                nk_label(ctx, buffer, NK_TEXT_RIGHT);
+                
+                nk_label(ctx, "New Balance:", NK_TEXT_LEFT);
+                sprintf(buffer, "%.2f", list_customer.newbalance);
+                nk_label(ctx, buffer, NK_TEXT_RIGHT);
+                
+                nk_label(ctx, "Payment:", NK_TEXT_LEFT);
+                sprintf(buffer, "%.2f", list_customer.payment);
+                nk_label(ctx, buffer, NK_TEXT_RIGHT);
+                
+                // Add more fields as needed...
+            }
+            fclose(file);
+        } else {
+            printf("Error opening file!\n");
+        }
+    }
+    nk_end(ctx);
 }
 
 int main(void)
@@ -133,7 +177,8 @@ int main(void)
         nk_glfw3_new_frame(&glfw);
 
         /* GUI */
-        customer_window(ctx);
+        create_customer_window(ctx);
+        list_customer_window(ctx);
 
         /* Draw */
         glViewport(0, 0, win_width, win_height);
