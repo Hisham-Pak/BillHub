@@ -26,7 +26,7 @@ static void error_callback(int e, const char *d)
  *                          CUSTOMER
  *
  * ===============================================================*/
-struct date{
+struct date {
     int month;
     int day;
     int year;
@@ -44,12 +44,12 @@ struct account {
 	struct date paymentdate;
 } create_customer, list_customer;
 
-struct product{
+struct product {
     int prod_no;
     char name[100];
     float price;
     char category[100];
-}add_product, list_product;
+} add_product, list_product;
 
 static void create_customer_window(struct nk_context *ctx)
 {
