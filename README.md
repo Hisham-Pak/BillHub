@@ -9,7 +9,11 @@ You need to install some stuff
 ```
 sudo apt-get install git clang libglfw3-dev libglew-dev
 ```
-Run `make` and BillHub executable gets generated in bin directory.
+You will also need to install [libharu](http://libharu.org/) to generate PDFs, follow instructions [here](https://github.com/libharu/libharu/wiki/Installation).
+
+You might also need to run `sudo ldconfig` to update the cache to find shared libraries.
+
+Finally, run `make` and BillHub executable gets generated in bin directory.
 
 ### Windows
 This is a one time setup so do it carefully to avoid any errors.
@@ -32,6 +36,9 @@ Watch how to install [video](https://www.youtube.com/watch?v=Zcy981HhGw0).
 
 #### Set up glfw
 1. Download these files [libglfw3.a](https://github.com/McNopper/OpenGL/blob/master/External/x86/Windows/MinGW/lib/libglfw3.a), [glfw3.h](https://github.com/glfw/glfw/blob/master/include/GLFW/glfw3.h) and [glfw3native.h](https://github.com/glfw/glfw/blob/master/include/GLFW/glfw3native.h). Then copy `libglfw3.a` to `C:\mingw64\lib`. Copy `glfw3.h` and `glfw3native.h` to `C:\mingw64\x86_64-w64-mingw32\include\GLFW` (create `GLFW` directory if it does not exists). Or, alternatively you can compile these files on your own watching this [video](https://www.youtube.com/watch?v=1s8C9dXRXmM) and then copying them to these directories.
+
+#### Set up libharu
+Install [libharu](http://libharu.org/) to generate PDFs, follow instructions [here](https://github.com/libharu/libharu/wiki/Installation).
 
 Finally, run `mingw32-make` in BillHub directory and BillHub.exe gets generated in bin directory.
 

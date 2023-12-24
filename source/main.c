@@ -14,6 +14,7 @@
 #define NK_IMPLEMENTATION
 #define NK_GLFW_GL3_IMPLEMENTATION
 #define NK_KEYSTATE_BASED_INPUT
+#include "hpdf.h"
 #include "../external/nuklear.h"
 #include "../external/nuklear_glfw_gl3.h"
 
@@ -21,11 +22,6 @@
 static void error_callback(int e, const char *d)
 {printf("Error %d: %s\n", e, d);}
 
-/* ===============================================================
- *
- *                          CUSTOMER
- *
- * ===============================================================*/
 struct date {
     int month;
     int day;
@@ -50,6 +46,19 @@ struct product {
     float price;
     char category[100];
 } add_product, list_product;
+
+struct bill {
+    int prod_no;
+    int quantity;
+    float unit_price;
+    float total_price;
+} bill_info;
+
+/* ===============================================================
+ *
+ *                          CUSTOMER
+ *
+ * ===============================================================*/
 
 static void create_customer_window(struct nk_context *ctx)
 {
@@ -213,6 +222,78 @@ static void list_product_window(struct nk_context *ctx)
     nk_end(ctx);
 }
 
+/* ===============================================================
+ *
+ *                          BILLING
+ *
+ * ===============================================================*/
+
+void generate_pdf(struct bill *bill_info) {
+    HPDF_Doc  pdf;
+    HPDF_Page page;
+    char buf[256];
+
+    pdf = HPDF_New(NULL, NULL);
+    if (!pdf) {
+        printf("Error: cannot create new PdfDoc object\n");
+        return;
+    }
+
+    /* Add a new page object. */
+    page = HPDF_AddPage(pdf);
+
+    HPDF_Page_SetWidth(page, 550);
+    HPDF_Page_SetHeight(page, 900);
+
+    /* Print the bill information on the PDF. */
+    HPDF_Page_BeginText(page);
+    HPDF_Page_SetFontAndSize(page, HPDF_GetFont(pdf, "Helvetica", NULL), 20);
+    sprintf(buf, "Product No: %d", bill_info->prod_no);
+    HPDF_Page_TextOut(page, 50, 850, buf);
+    sprintf(buf, "Quantity: %d", bill_info->quantity);
+    HPDF_Page_TextOut(page, 50, 830, buf);
+    sprintf(buf, "Unit Price: %.2f", bill_info->unit_price);
+    HPDF_Page_TextOut(page, 50, 810, buf);
+    sprintf(buf, "Total Price: %.2f", bill_info->total_price);
+    HPDF_Page_TextOut(page, 50, 790, buf);
+    HPDF_Page_EndText(page);
+
+    /* Save the document to a file */
+    HPDF_SaveToFile(pdf, "bill.pdf");
+
+    /* Clean up */
+    HPDF_Free(pdf);
+}
+
+void calculate_total_price(struct bill *bill_info) {
+    bill_info->total_price = bill_info->quantity * bill_info->unit_price;
+}
+
+static void billing_window(struct nk_context *ctx)
+{
+    if (nk_begin(ctx, "Billing", nk_rect(50, 500, 400, 400), NK_WINDOW_BORDER|NK_WINDOW_MOVABLE|NK_WINDOW_CLOSABLE)) {
+        nk_layout_row_dynamic(ctx, 30, 2);
+        
+        nk_label(ctx, "Product No:", NK_TEXT_LEFT);
+        nk_property_int(ctx, "#Product No:", INT_MIN, &bill_info.prod_no, INT_MAX, 1, 1);
+        
+        nk_label(ctx, "Quantity:", NK_TEXT_LEFT);
+        nk_property_int(ctx, "#Quantity:", INT_MIN, &bill_info.quantity, INT_MAX, 1, 1);
+
+        nk_label(ctx, "Unit Price:", NK_TEXT_LEFT);
+        nk_property_float(ctx, "#Unit Price:", FLT_MIN, &bill_info.unit_price, FLT_MAX, 1, 1);
+
+        calculate_total_price(&bill_info);
+        char buffer[100];
+        sprintf(buffer, "Total Price: %.2f", bill_info.total_price);
+        nk_label(ctx, buffer, NK_TEXT_LEFT);
+
+        if (nk_button_label(ctx, "Generate Bill")) {
+            generate_pdf(&bill_info);
+        }
+    }
+    nk_end(ctx);
+}
 
 int main(void)
 {
@@ -260,6 +341,7 @@ int main(void)
         list_customer_window(ctx);
         add_product_window(ctx);
         list_product_window(ctx);
+        billing_window(ctx);
 
         /* Draw */
         glViewport(0, 0, win_width, win_height);
