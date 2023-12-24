@@ -5,7 +5,8 @@ LIBS :=
 ifeq ($(OS),Windows_NT)
 	DEL_BIN = IF EXIST bin DEL /F /Q bin\*
 	BIN := $(BIN).exe
-	LIBS := -lglfw3 -lopengl32 -lm -lGLU32 -lGLEW32
+	LIBS := -lglfw3 -lopengl32 -lm -lGLU32 -lGLEW32 -lgdi32		# use -mwindows to hide cmd window when running executable
+	CC := gcc
 else
 	DEL_BIN = rm -rf bin
 	UNAME_S := $(shell uname -s)

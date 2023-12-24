@@ -26,7 +26,7 @@ static void error_callback(int e, const char *d)
  *                          CUSTOMER
  *
  * ===============================================================*/
-struct date{
+struct date {
     int month;
     int day;
     int year;
@@ -43,6 +43,13 @@ struct account {
 	float payment;
 	struct date paymentdate;
 } create_customer, list_customer;
+
+struct product {
+    int prod_no;
+    char name[100];
+    float price;
+    char category[100];
+} add_product, list_product;
 
 static void create_customer_window(struct nk_context *ctx)
 {
@@ -135,6 +142,78 @@ static void list_customer_window(struct nk_context *ctx)
     nk_end(ctx);
 }
 
+/* ===============================================================
+ *
+ *                          PRODUCT
+ *
+ * ===============================================================*/
+
+static void add_product_window(struct nk_context *ctx)
+{
+	if (nk_begin(ctx, "Add Product", nk_rect(950, 50, 400, 400), NK_WINDOW_BORDER|NK_WINDOW_MOVABLE|NK_WINDOW_CLOSABLE)) {
+		nk_layout_row_dynamic(ctx, 30, 2);
+		
+		nk_label(ctx, "Product No:", NK_TEXT_LEFT);
+		nk_property_int(ctx, "#Product No:", INT_MIN, &add_product.prod_no, INT_MAX, 1, 1);
+		
+        nk_label(ctx, "Name:", NK_TEXT_LEFT);
+		nk_edit_string_zero_terminated(ctx, NK_EDIT_FIELD, add_product.name, sizeof(add_product.name), nk_filter_default);
+		
+		nk_label(ctx, "Category:", NK_TEXT_LEFT);
+		nk_edit_string_zero_terminated(ctx, NK_EDIT_FIELD, add_product.category, sizeof(add_product.category), nk_filter_default);
+
+        nk_label(ctx, "Price:", NK_TEXT_LEFT);
+        nk_property_float(ctx, "#Price:", FLT_MIN, &add_product.price, FLT_MAX, 1, 1);
+
+		// Add more fields as needed...
+		
+		if (nk_button_label(ctx, "Submit")) {
+            FILE *file = fopen("products.bin", "ab");
+            if (file != NULL) {
+                fwrite(&add_product, sizeof(add_product), 1, file);
+                // Print more fields as needed...
+                fclose(file);
+            } else {
+                printf("Error opening file!\n");
+            }
+		}
+	}
+	nk_end(ctx);
+}
+
+static void list_product_window(struct nk_context *ctx)
+{
+    if (nk_begin(ctx, "List Products", nk_rect(1400, 50, 400, 400), NK_WINDOW_BORDER|NK_WINDOW_MOVABLE|NK_WINDOW_CLOSABLE)) {
+        FILE *file = fopen("products.bin", "rb");
+        if (file != NULL) {
+            char buffer[10000];
+            while (fread(&list_product, sizeof(struct product), 1, file)) {
+                nk_layout_row_dynamic(ctx, 30, 2);
+                nk_label(ctx, "Product No:", NK_TEXT_LEFT);
+                sprintf(buffer, "%d", list_product.prod_no);
+                nk_label(ctx, buffer, NK_TEXT_RIGHT);
+                
+                nk_label(ctx, "Name:", NK_TEXT_LEFT);
+                nk_label(ctx, list_product.name, NK_TEXT_RIGHT);
+                
+                nk_label(ctx, "Category:", NK_TEXT_LEFT);
+                nk_label(ctx, list_product.category, NK_TEXT_RIGHT);
+                
+                nk_label(ctx, "Price:", NK_TEXT_LEFT);
+                sprintf(buffer, "%.2f", list_product.price);
+                nk_label(ctx, buffer, NK_TEXT_RIGHT);
+                
+                // Add more fields as needed...
+            }
+            fclose(file);
+        } else {
+            printf("Error opening file!\n");
+        }
+    }
+    nk_end(ctx);
+}
+
+
 int main(void)
 {
     /* GLFW */
@@ -179,6 +258,8 @@ int main(void)
         /* GUI */
         create_customer_window(ctx);
         list_customer_window(ctx);
+        add_product_window(ctx);
+        list_product_window(ctx);
 
         /* Draw */
         glViewport(0, 0, win_width, win_height);
